@@ -34,6 +34,57 @@ jobs:
       - name: Verify
         run: ./scripts/check_python.sh
 
+  # Model-checks the real src/estimate_size.rs. The official action is used
+  # rather than a hand-rolled install because `cargo kani setup` pulls down a
+  # CBMC bundle and the action already knows how to do that.
+  kani:
+    name: Rust, Kani
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: model-checking/kani-github-action@v1
+        with:
+          kani-version: '0.67.0'
+          command: 'cargo-kani'
+          working-directory: 'scenarios/estimate_size/verification/rust_verification/kani'
+
+  # Verus ships as a release archive, not something cargo installs, and it
+  # refuses to start unless the exact rustc named in its version.json is
+  # present. Both are read out of the archive rather than hardcoded, so
+  # bumping VERUS_VERSION is the only edit needed.
+  verus:
+    name: Rust, Verus
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERUS_VERSION: 0.2026.08.30.b432e82
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download Verus
+        run: |
+          set -euo pipefail
+          curl -sSfL -o verus.zip \
+            "https://github.com/verus-lang/verus/releases/download/release/${VERUS_VERSION}/verus-${VERUS_VERSION}-x86-linux.zip"
+          unzip -q verus.zip -d verus-dist
+          bin="$(find verus-dist -maxdepth 3 -type f -name verus | head -1)"
+          test -n "$bin" || { echo "no verus binary in the archive"; exit 1; }
+          chmod +x "$bin"
+          echo "VERUS=$PWD/$bin" >> "$GITHUB_ENV"
+          echo "VERUS_DIR=$PWD/$(dirname "$bin")" >> "$GITHUB_ENV"
+
+      - name: Install the rustc Verus pins
+        run: |
+          set -euo pipefail
+          toolchain="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["verus"]["toolchain"])' "$VERUS_DIR/version.json")"
+          echo "Verus $VERUS_VERSION requires $toolchain"
+          rustup toolchain install "$toolchain"
+
+      - name: Verify
+        run: ./scripts/check_rust.sh verus
+
   # Zero dependencies, toolchain only -- this one is fast and should stay fast.
   native:
     name: Lean, hand-written (v4.33.1)

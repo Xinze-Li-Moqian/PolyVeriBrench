@@ -132,8 +132,32 @@ proofs use `scalar_tac`, which stays inside Lean, and depend on nothing beyond
 translated side is the cleaner of the two -- the opposite of what the extra
 translation layer suggests, and a distinction worth keeping visible.
 
+### Rust backends
+
+```sh
+cargo install --locked kani-verifier && cargo kani setup
+./scripts/check_rust.sh kani
+```
+
+Verus is a release archive rather than a cargo install, and it pins an exact
+rustc that must be present or it refuses to start. Download the archive for
+your platform from [verus-lang/verus releases][verus-releases], then:
+
+```sh
+rustup toolchain install "$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["verus"]["toolchain"])' path/to/verus-dist/version.json)"
+VERUS=path/to/verus-dist/verus ./scripts/check_rust.sh verus
+```
+
+[verus-releases]: https://github.com/verus-lang/verus/releases
+
 ## Status
 
-CI covers the two Lean projects and both Python backends. Not yet wired up: the
-Kani and Verus files have no `Cargo.toml` and no runner, so they are not built
-or checked automatically.
+CI runs all five backends on every push: both Lean projects, both Python
+backends, Kani, and Verus.
+
+The ladder is not evenly covered. Claims 7 and 8 exist in the Lean, Aeneas,
+Python, and (for 7) Verus backends; Kani has neither as a single harness, and
+that is a property of the tool rather than an omission. `#[kani::should_panic]`
+is a harness attribute, not a proposition, so it cannot appear inside a formula
+or be conjoined with anything -- which is why claim 1 is already split there
+into `original_panics_at_1023` and `original_does_not_panic_elsewhere`.

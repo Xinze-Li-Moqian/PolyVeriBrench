@@ -1,0 +1,22 @@
+# Kani drives a real Cargo package, so this exists purely to make one out of
+# the single file next to it. The lib path points at `estimate_size.rs` rather
+# than the usual `src/lib.rs` so that the file keeps its name and, more to the
+# point, its location: its `include!("../../../src/estimate_size.rs")` is
+# resolved relative to the including file, and that relative path is how this
+# backend gets to verify the program the project actually ships instead of a
+# copy of it.
+#
+# Run with `cargo kani` from this directory.
+
+[package]
+name = "estimate_size_kani"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "estimate_size_kani"
+path = "estimate_size.rs"
+
+# No `kani` dependency: cargo-kani injects the crate when it builds the
+# harnesses. Adding it here would break a plain `cargo build`.
