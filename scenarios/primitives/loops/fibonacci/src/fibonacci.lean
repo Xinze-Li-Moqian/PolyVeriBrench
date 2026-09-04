@@ -1,8 +1,3 @@
-def fib_spec : Nat → Nat
-  | 0 => 0
-  | 1 => 1
-  | n + 2 => fib_spec n + fib_spec (n + 1)
-
 def fib_iter (n : Nat) : Nat := Id.run do
   if n < 2 then
     return n

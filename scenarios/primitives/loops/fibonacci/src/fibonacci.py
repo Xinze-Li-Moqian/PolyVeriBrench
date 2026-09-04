@@ -1,9 +1,3 @@
-def fib_spec(n: int) -> int:
-    if n < 2:
-        return n
-    return fib_spec(n - 1) + fib_spec(n - 2)
-
-
 def fib_iter(n: int) -> int:
     if n < 2:
         return n

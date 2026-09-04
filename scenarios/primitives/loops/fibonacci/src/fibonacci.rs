@@ -1,10 +1,3 @@
-fn fib_spec(n: u32) -> u64 {
-    if n < 2 {
-        return n as u64;
-    }
-    fib_spec(n - 1) + fib_spec(n - 2)
-}
-
 fn fib_iter(n: u32) -> u64 {
     if n < 2 {
         return n as u64;
