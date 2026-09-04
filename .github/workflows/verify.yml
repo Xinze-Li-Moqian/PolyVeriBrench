@@ -9,7 +9,12 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded PR runs, but let main-branch runs finish. Cancelling on
+  # main costs the thing this repo is for: "did this commit verify?" should have
+  # an answer for every commit, not just the last one before a quick follow-up.
+  # The Aeneas job takes ~6 minutes, so any push inside that window used to
+  # leave the previous commit marked cancelled with its heaviest job unfinished.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Z3 decides the claims on a re-encoding; CrossHair symbolically executes the
