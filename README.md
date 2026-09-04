@@ -51,9 +51,22 @@ elsewhere or which error it raises. Claims 7 and 8 close that gap.
 | Path | Tool | Verifies | Notes |
 |---|---|---|---|
 | `verification/lean_verification/` | Lean 4 + `bv_decide` | a hand-written Lean transcription of the program | the transcription step is unverified |
-| `verification/rust_verification/kani/` | Kani | the real `src/estimate_size.rs`, via `include!` | the only backend reading the shipped source |
+| `verification/rust_verification/kani/` | Kani | the real `src/estimate_size.rs`, via `include!` | reads the shipped source |
 | `verification/rust_verification/verus/` | Verus | Verus-dialect Rust that compiles to the real binary | specs are erased, no second artifact |
 | `verification/rust_verification/aeneas/` | Aeneas + Lean 4 | Lean mechanically translated from the Rust | trusts Charon/Aeneas instead of a human |
+| `verification/python_verification/z3/` | Z3 | a hand-written SMT re-encoding | decides the claims outright |
+| `verification/python_verification/crosshair/` | CrossHair | the real `src/estimate_size.py` | reads the shipped source |
+
+Each language has one backend that reads the real source and one that works from
+a transcription. That split is the interesting axis: a transcription puts an
+unverified human step between the program and the theorem, and reading the real
+source moves that step into a tool instead of removing it.
+
+The Python backends also quantify over a larger domain. `int` is unbounded, so
+they range over all of Z, negatives included, where the Rust and Lean versions
+cover `0 .. 2**32 - 1`. Bit blasting -- what `bv_decide` and Kani ultimately do
+-- is not available on an infinite domain, so Z3 discharges these in linear
+integer arithmetic instead.
 
 Aeneas models the whole outcome -- return, panic, and non-termination -- as one
 first-class `Result` value, so claim 8 there carries a third case, `.div =>
@@ -73,6 +86,21 @@ cd scenarios/estimate_size/verification/rust_verification/aeneas && lake build
 
 The Aeneas project depends on Mathlib. Fetch prebuilt oleans rather than
 compiling it: `lake exe cache get`.
+
+The Python backends need two pinned tools:
+
+```sh
+pip install -r scenarios/estimate_size/verification/python_verification/requirements.txt
+./scripts/check_python.sh             # both
+./scripts/check_python.sh crosshair   # or just one
+```
+
+CrossHair searches rather than decides, so in general a clean run means "no
+counterexample found within the budget". On this program it means more: run it
+with `--verbose` and it reports `Exhausted calltree search with CONFIRMED` for
+every claim, six paths each -- one per branch. There are no loops, so every
+execution path is enumerated and its path condition discharged. Add a loop and
+that stops holding, which is what separates it from the Z3 backend.
 
 ### Axiom audit
 
@@ -106,8 +134,6 @@ translation layer suggests, and a distinction worth keeping visible.
 
 ## Status
 
-CI covers the two Lean projects. Not yet wired up:
-
-- `verification/python_verification/` is empty.
-- The Kani and Verus files have no `Cargo.toml` and no runner, so they are not
-  built or checked automatically.
+CI covers the two Lean projects and both Python backends. Not yet wired up: the
+Kani and Verus files have no `Cargo.toml` and no runner, so they are not built
+or checked automatically.

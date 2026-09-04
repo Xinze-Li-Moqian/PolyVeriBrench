@@ -12,6 +12,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Z3 decides the claims on a re-encoding; CrossHair symbolically executes the
+  # real src/estimate_size.py. Seconds to run -- no toolchain, just pip.
+  python:
+    name: Python (Z3 + CrossHair)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          # CrossHair rewrites bytecode and so is interpreter-version sensitive.
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scenarios/estimate_size/verification/python_verification/requirements.txt
+
+      - name: Install pinned tools
+        run: pip install -r scenarios/estimate_size/verification/python_verification/requirements.txt
+
+      - name: Verify
+        run: ./scripts/check_python.sh
+
   # Zero dependencies, toolchain only -- this one is fast and should stay fast.
   native:
     name: Lean, hand-written (v4.33.1)

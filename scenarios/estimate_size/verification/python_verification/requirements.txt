@@ -1,0 +1,5 @@
+# Pinned so a CI run and a local run check the same thing.
+# CrossHair rewrites bytecode, so it is sensitive to the interpreter version;
+# it declares support through 3.15, and CI runs it on 3.12.
+z3-solver==5.1.0
+crosshair-tool==0.0.110
