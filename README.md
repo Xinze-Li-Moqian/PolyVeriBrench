@@ -13,10 +13,11 @@ to a complete one.
 | [`primitives/boundary/estimate_size`](scenarios/primitives/boundary/estimate_size/) | a size lookup that panics on exactly one input out of 2^32 | Lean, Aeneas, Kani, Verus, Z3, CrossHair, Nagini, Dafny |
 | [`primitives/loops/binary_search`](scenarios/primitives/loops/binary_search/) | binary search: the midpoint overflow that shipped in the JDK for nine years | Dafny |
 | [`primitives/loops/fibonacci`](scenarios/primitives/loops/fibonacci/) | an iterative loop proved equal to a recursive specification | Dafny, Lean |
+| [`primitives/recursion/bst_delete`](scenarios/primitives/recursion/bst_delete/) | BST delete: the two-children case, where the value goes but the invariant breaks | Dafny |
 
 Scenarios are grouped by what makes verification hard, not by what the program
 does: `boundary/` is about the input space, `loops/` about unbounded control
-flow. Each scenario's README states the program, the claims, and which backend
+flow, `recursion/` about unbounded data. Each scenario's README states the program, the claims, and which backend
 proves which. This file is only about running them.
 
 ## Running the backends
