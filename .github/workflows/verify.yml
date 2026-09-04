@@ -17,12 +17,23 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Z3 decides the claims on a re-encoding; CrossHair symbolically executes the
-  # real src/estimate_size.py. Seconds to run -- no toolchain, just pip.
+  # Two separate backends, so two separate jobs -- the same way Kani and Verus
+  # get one each. They answer the same questions by opposite means: Z3 decides
+  # the claims on a re-encoding, CrossHair symbolically executes the real
+  # src/estimate_size.py. Reporting them together would hide which one broke.
   python:
-    name: Python (Z3 + CrossHair)
+    name: Python, ${{ matrix.label }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      # One failing backend should not cancel the other; both results are wanted.
+      fail-fast: false
+      matrix:
+        include:
+          - backend: z3
+            label: Z3
+          - backend: crosshair
+            label: CrossHair
     steps:
       - uses: actions/checkout@v5
 
@@ -37,7 +48,7 @@ jobs:
         run: pip install -r scenarios/estimate_size/verification/python_verification/requirements.txt
 
       - name: Verify
-        run: ./scripts/check_python.sh
+        run: ./scripts/check_python.sh ${{ matrix.backend }}
 
   # Program, specification, and proofs are one Dafny file, so there is nothing
   # to install but Dafny itself.
