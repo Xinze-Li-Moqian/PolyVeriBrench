@@ -1,0 +1,12 @@
+name = "estimate_size_aeneas"
+version = "0.1.0"
+defaultTargets = ["EstimateSizeAeneas"]
+
+[[require]]
+name = "aeneas"
+git = { url = "https://github.com/AeneasVerif/aeneas", subDir = "backends/lean" }
+rev = "5b9dcf33dccdb1560ea7203ac57ea202476b6ed3"
+
+[[lean_lib]]
+name = "EstimateSizeAeneas"
+globs = ["EstimateSizeAeneas", "EstimateSizeAeneas.*"]

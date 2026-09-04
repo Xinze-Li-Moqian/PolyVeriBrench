@@ -1,0 +1,59 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Zero dependencies, toolchain only -- this one is fast and should stay fast.
+  native:
+    name: Lean, hand-written (v4.33.1)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: scenarios/estimate_size
+
+      # Builds again (cached, seconds) and then reports the axioms behind every
+      # theorem. Fails on sorryAx, on native_decide, or on anything unrecognised.
+      - name: Axiom audit
+        run: ./scripts/check_axioms.sh native
+
+  # Separate job because this one drags in Mathlib. Kept off the critical path
+  # so a broken hand-written proof reports in ~2 minutes rather than ~20.
+  aeneas:
+    name: Lean, Aeneas-translated Rust (v4.31.0 + Mathlib)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      # Mathlib's build output is ~6 GB unpacked; the default runner image does
+      # not leave much room for it.
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      # use-github-cache is off on purpose: this project's .lake is ~7.6 GB, far
+      # past what actions/cache can carry. Mathlib comes from `lake exe cache
+      # get` instead -- the pinned revision is the v4.31.0 tag, so upstream has
+      # prebuilt oleans for it and nothing is compiled from source.
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: scenarios/estimate_size/verification/rust_verification/aeneas
+          use-mathlib-cache: true
+          use-github-cache: false
+
+      - name: Axiom audit
+        run: ./scripts/check_axioms.sh aeneas

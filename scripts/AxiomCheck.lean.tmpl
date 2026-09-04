@@ -1,0 +1,88 @@
+/-
+Axiom audit for one verification module.
+
+`scripts/check_axioms.sh` substitutes `__MODULE__` below and runs this file with
+`lake env lean`, once per Lean project in the repo.
+
+Why this exists: `grep sorry` cannot see what a proof actually rests on. A
+theorem can be closed by a tactic that defers to an external oracle, or by a
+lemma that was itself admitted somewhere in a dependency -- the Aeneas standard
+library vendored under this repo has several `sorry`s of its own. `#print
+axioms` is the only thing that reports the real trusted base, so this walks
+every theorem in the module and classifies what it depends on.
+
+Policy:
+  standard   propext / Classical.choice / Quot.sound      accepted silently
+  sat        bv_decide's SAT certificates                 accepted, but counted
+  sorry      sorryAx                                      FAILS
+  compiler   native_decide's ofReduce* / trustCompiler    FAILS
+  unknown    anything else                                FAILS, needs review
+
+Axioms are matched by string rather than by `` `Name `` so that the same file
+works on both toolchains in this repo (v4.33.1 and v4.31.0) and does not fail
+to elaborate if an axiom is absent from one of them.
+-/
+import Lean
+import __MODULE__
+
+open Lean Elab Command
+
+private def classify (ax : Name) : String :=
+  let s := toString ax
+  if s == "sorryAx" then "sorry"
+  else if s == "propext" || s == "Classical.choice" || s == "Quot.sound" then "standard"
+  else if (s.splitOn "bv_decide").length > 1 then "sat"
+  else if (s.splitOn "ofReduce").length > 1 || (s.splitOn "trustCompiler").length > 1 then
+    "compiler"
+  else "unknown"
+
+private def pad (s : String) (n : Nat) : String :=
+  if s.length >= n then s else s ++ "".pushn ' ' (n - s.length)
+
+run_cmd do
+  let env ← getEnv
+  let modName : Name := `__MODULE__
+  let some idx := env.getModuleIdx? modName
+    | throwError "module not found in environment: {modName}"
+
+  -- Every theorem the module itself declares, minus compiler-generated ones
+  -- (`.eq_1`, `.match_1`, `._simp_*`, `_private.*`).
+  let mut rows : Array (String × Array String) := #[]
+  for c in env.header.moduleData[idx]!.constNames do
+    if c.isInternalDetail then continue
+    if let some (.thmInfo _) := env.find? c then
+      let axs ← collectAxioms c
+      rows := rows.push (toString c, axs.map classify)
+  let sorted := rows.qsort (fun a b => a.1 < b.1)
+
+  if sorted.isEmpty then
+    throwError "no theorems found in {modName} -- was the module renamed?"
+
+  let width := sorted.foldl (fun w r => max w r.1.length) 0
+  let mut bad : Array String := #[]
+  let mut satTotal : Nat := 0
+
+  -- NB: do not call the binder below `name`. Under this repo's Aeneas/Mathlib
+  -- imports that identifier collides with existing syntax and the whole `let`
+  -- fails to parse with "ill-formed syntax".
+  for row in sorted do
+    let thmName := row.1
+    let classes := row.2
+    let nStd := (classes.filter (· == "standard")).size
+    let nSat := (classes.filter (· == "sat")).size
+    let offenders := classes.filter (fun k => k != "standard" && k != "sat")
+    satTotal := satTotal + nSat
+    let detail :=
+      if classes.isEmpty then "no axioms"
+      else String.intercalate ", " <|
+        (if nStd > 0 then [s!"standard x{nStd}"] else [])
+          ++ (if nSat > 0 then [s!"sat x{nSat}"] else [])
+          ++ offenders.toList.map (fun k => s!"<<{k}>>")
+    let tag := if offenders.isEmpty then "ok  " else "FAIL"
+    unless offenders.isEmpty do
+      bad := bad.push thmName
+    logInfo m!"  {tag}  {pad thmName width}  {detail}"
+
+  logInfo m!"  {sorted.size} theorems | {satTotal} SAT certificate axioms | {bad.size} failing"
+  unless bad.isEmpty do
+    throwError "axiom audit failed for {modName}: {bad.toList}"

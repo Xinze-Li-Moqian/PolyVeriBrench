@@ -1,0 +1,7 @@
+name = "estimate_size"
+version = "0.1.0"
+defaultTargets = ["EstimateSize"]
+
+[[lean_lib]]
+name = "EstimateSize"
+roots = ["src.estimate_size", "verification.lean_verification.estimate_size"]

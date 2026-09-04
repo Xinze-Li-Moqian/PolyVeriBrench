@@ -1,0 +1,24 @@
+# Lake build output and vendored dependencies.
+# The Aeneas project pulls in Mathlib; its .lake is ~7.6 GB locally.
+.lake/
+build/
+*.olean
+*.ilean
+*.trace
+
+# Claude Code local settings (machine-specific paths, not shared config)
+.claude/settings.local.json
+
+# Rust
+target/
+Cargo.lock
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
