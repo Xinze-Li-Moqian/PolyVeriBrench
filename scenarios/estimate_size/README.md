@@ -1,7 +1,7 @@
 # estimate_size
 
 One function with a bug that fires on exactly one input out of 2^32, written
-three times, and checked by six verification backends asked the same eight
+three times, and checked by seven verification backends asked the same eight
 questions.
 
 ## The function
@@ -60,16 +60,16 @@ x < 128       -> 1        x = 1023      -> 4   (was the panic)
 
 ## Coverage
 
-| # | Lean |    Aeneas    |    Kani    |       Verus       |           Z3           | CrossHair |
-| - | :--: | :----------: | :--------: | :----------------: | :--------------------: | :-------: |
-| 1 |  ✓  |      ✓      | ✓ (split) |         ✓         |           ✓           |    ✓    |
-| 2 |  ✓  |      ✓      |     ✓     |         ✓         |           ✓           |    ✓    |
-| 3 |  ✓  |      ✓      |     ✓     |         ✓         |           ✓           |    ✓    |
-| 4 |  ✓  |      ✓      |     ✓     |         ✓         |           ✓           |    ✓    |
-| 5 |  ✓  |      ✓      |     ✓     |         ✓         |           ✓           |    ✓    |
-| 6 |  ✓  |      ✓      |     ✓     |         ✓         |           ✓           |    ✓    |
-| 7 |  ✓  |      ✓      |     —     | ✓ (as`ensures`) | ✓ (no error identity) |    ✓    |
-| 8 |  ✓  | ✓ +`.div` |     —     |         —         |           ✓           |    ✓    |
+| # | Lean | Aeneas | Kani | Verus | Z3 | CrossHair | Dafny |
+| - | :--: | :----: | :--: | :---: | :-: | :-------: | :---: |
+| 1 | ✓ | ✓ | ✓ (split) | ✓ | ✓ | ✓ | ✓ |
+| 2 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 3 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 4 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 5 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 6 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 7 | ✓ | ✓ | — | ✓ (as `ensures`) | ✓ (no error identity) | ✓ | ✓ |
+| 8 | ✓ | ✓ + `.div` | — | — | ✓ | ✓ | ✓ |
 
 Where the table is not full, the reason is usually the tool rather than the
 effort:
@@ -92,6 +92,15 @@ transcribed into Lean.
 which error is raised. CrossHair covers that for Python, because it runs the
 real code and can inspect the exception object.
 
+**Dafny can make the bug unreachable instead of proving things about it.**
+Alongside the eight claims its file carries `EstimateSizePanicPartial`: the same
+function with `requires x != 1023` in its signature and no `Result` type at all.
+Written that way the failing input is not handled, it is excluded, and every
+caller has to discharge the precondition. Which framing is honest depends on
+whether 1023 is a caller error or a defect in the function -- and Dafny is the
+only backend here that makes you answer that in the signature rather than in a
+proof.
+
 ## The backends
 
 | Path                                            | Tool                  | What it actually reads                              |
@@ -102,13 +111,21 @@ real code and can inspect the exception object.
 | `verification/rust_verification/aeneas/`      | Aeneas + Lean 4       | Lean mechanically translated from the Rust          |
 | `verification/python_verification/z3/`        | Z3                    | a hand-written SMT re-encoding                      |
 | `verification/python_verification/crosshair/` | CrossHair             | the real`src/estimate_size.py`                    |
+| `verification/dafny_verification/` | Dafny | a program that exists only in Dafny |
 
-Each language has one backend that reads the real source and one that works from
-a transcription. That is the axis worth watching: a transcription puts an
-unverified human step between the program and the theorem. Reading the real
-source moves that step into a tool rather than removing it -- Aeneas trades a
-human transcriber for Charon plus its own translation, neither of which is
+Python and Rust each have one backend that reads the real source and one that
+works from a transcription. That is the axis worth watching: a transcription
+puts an unverified human step between the program and the theorem. Reading the
+real source moves that step into a tool rather than removing it -- Aeneas trades
+a human transcriber for Charon plus its own translation, neither of which is
 verified either.
+
+Dafny sits at the far end of that axis, alone. Its program exists only in Dafny;
+nothing connects it to what the project ships but a human having written the
+same branches twice. What it gets in exchange is that the program, the
+specification, and the proofs are one artifact in one language, with the
+verifier part of the compiler rather than bolted on -- which is why it reaches
+8/8 in under a second with every lemma body empty.
 
 Two differences in what is being quantified over:
 
@@ -147,7 +164,9 @@ theorem and removes an external oracle from behind it.
 
 Kani reports 7 harnesses (claim 1 costs two), Verus reports 8 verified items
 (6 checks plus the two function contracts), Z3 decides 8 claims and spot-checks
-its encoding against the real source at 18 boundary values, and CrossHair
-exhausts the path tree on all 8.
+its encoding against the real source at 18 boundary values, CrossHair exhausts
+the path tree on all 8, and Dafny reports 22 verified -- the 8 claims, the
+partial-function variant and its lemma, and the well-formedness obligations on
+every function and on the `uint32` newtype itself.
 
 See the [repository README](../../README.md) for how to run any of this.

@@ -39,6 +39,22 @@ jobs:
       - name: Verify
         run: ./scripts/check_python.sh
 
+  # Program, specification, and proofs are one Dafny file, so there is nothing
+  # to install but Dafny itself.
+  dafny:
+    name: Dafny
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dafny-lang/setup-dafny-action@v1.9.1
+        with:
+          dafny-version: '4.11.0'
+
+      - name: Verify
+        run: ./scripts/check_dafny.sh
+
   # Model-checks the real src/estimate_size.rs. The official action is used
   # rather than a hand-rolled install because `cargo kani setup` pulls down a
   # CBMC bundle and the action already knows how to do that.

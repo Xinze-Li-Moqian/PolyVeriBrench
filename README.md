@@ -10,7 +10,7 @@ to a complete one.
 
 | Scenario | Program | Backends |
 |---|---|---|
-| [`estimate_size`](scenarios/estimate_size/) | a size lookup that panics on exactly one input out of 2^32 | Lean, Aeneas, Kani, Verus, Z3, CrossHair |
+| [`estimate_size`](scenarios/estimate_size/) | a size lookup that panics on exactly one input out of 2^32 | Lean, Aeneas, Kani, Verus, Z3, CrossHair, Dafny |
 
 Each scenario's README states the program, the claims, and which backend proves
 which. This file is only about running them.
@@ -55,6 +55,17 @@ VERUS=path/to/verus-dist/verus ./scripts/check_rust.sh verus
 ```
 
 [verus-releases]: https://github.com/verus-lang/verus/releases
+
+### Dafny
+
+Dafny ships as a self-contained release archive. Grab the one for your platform
+from [dafny-lang/dafny releases][dafny-releases], then:
+
+```sh
+DAFNY=path/to/dafny/dafny ./scripts/check_dafny.sh
+```
+
+[dafny-releases]: https://github.com/dafny-lang/dafny/releases
 
 ## Axiom audit
 
