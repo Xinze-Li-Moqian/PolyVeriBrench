@@ -77,6 +77,30 @@ Termination is a separate obligation again, discharged by `decreases hi - lo`.
 In `estimate_size` the Aeneas backend's `.div => False` case was free, because a
 branching function cannot fail to terminate. Here it would not be.
 
+## The same line is a bug in one language and not another
+
+`src/` has the program three times, and the defect only exists in one of them.
+
+```python
+mid = (lo + hi) // 2     # binary_search.py  -- correct
+```
+```lean
+let mid := (lo + hi) / 2 -- binary_search.lean -- correct
+```
+```rust
+let mid = (lo + hi) / 2; // binary_search.rs -- overflows
+```
+
+Python's `int` and Lean's `Nat` are unbounded, so the sum cannot overflow and
+the naive midpoint is simply right. Only the Rust version carries an error/
+correction pair, and its indices are `u32` rather than `usize` on purpose: the
+overflow needs `lo + hi >= 2^32`, which a 64-bit `usize` will never reach in
+practice and which is the width the JDK bug lived at.
+
+Worth noticing what that does to a benchmark. The bug is not a property of the
+algorithm; it is a property of the integer model the language hands you. A
+verifier for Python has nothing to find here.
+
 ## Backends
 
 | Path | Tool | Status |
