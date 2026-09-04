@@ -7,7 +7,7 @@
 #   ./scripts/check_python.sh crosshair
 #
 # Needs the pinned tools:
-#   pip install -r scenarios/estimate_size/verification/python_verification/requirements.txt
+#   pip install -r scenarios/primitives/boundary/estimate_size/verification/python_verification/requirements.txt
 #
 # The two backends sit on opposite sides of the same trade the Rust ones make.
 # Z3 re-encodes the program and decides the claims outright. CrossHair reads the
@@ -18,7 +18,7 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PYVER_DIR="$REPO_ROOT/scenarios/estimate_size/verification/python_verification"
+PYVER_DIR="$REPO_ROOT/scenarios/primitives/boundary/estimate_size/verification/python_verification"
 PYTHON="${PYTHON:-python3}"
 CROSSHAIR="${CROSSHAIR:-crosshair}"
 

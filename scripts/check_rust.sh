@@ -30,7 +30,7 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RUST_DIR="$REPO_ROOT/scenarios/estimate_size/verification/rust_verification"
+RUST_DIR="$REPO_ROOT/scenarios/primitives/boundary/estimate_size/verification/rust_verification"
 VERUS="${VERUS:-verus}"
 
 selected=("$@")

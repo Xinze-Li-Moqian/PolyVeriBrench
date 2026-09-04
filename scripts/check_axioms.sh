@@ -25,8 +25,8 @@ TMPL="$REPO_ROOT/scripts/AxiomCheck.lean.tmpl"
 
 # "<short name>|<project dir relative to repo root>|<module to audit>"
 PROJECTS=(
-  "native|scenarios/estimate_size|verification.lean_verification.estimate_size"
-  "aeneas|scenarios/estimate_size/verification/rust_verification/aeneas|EstimateSizeAeneas.Proofs"
+  "native|scenarios/primitives/boundary/estimate_size|verification.lean_verification.estimate_size"
+  "aeneas|scenarios/primitives/boundary/estimate_size/verification/rust_verification/aeneas|EstimateSizeAeneas.Proofs"
 )
 
 if [[ ! -f "$TMPL" ]]; then

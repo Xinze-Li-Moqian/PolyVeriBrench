@@ -42,10 +42,10 @@ jobs:
           # CrossHair rewrites bytecode and so is interpreter-version sensitive.
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: scenarios/estimate_size/verification/python_verification/requirements.txt
+          cache-dependency-path: scenarios/primitives/boundary/estimate_size/verification/python_verification/requirements.txt
 
       - name: Install pinned tools
-        run: pip install -r scenarios/estimate_size/verification/python_verification/requirements.txt
+        run: pip install -r scenarios/primitives/boundary/estimate_size/verification/python_verification/requirements.txt
 
       - name: Verify
         run: ./scripts/check_python.sh ${{ matrix.backend }}
@@ -80,7 +80,7 @@ jobs:
         with:
           kani-version: '0.67.0'
           command: 'cargo-kani'
-          working-directory: 'scenarios/estimate_size/verification/rust_verification/kani'
+          working-directory: 'scenarios/primitives/boundary/estimate_size/verification/rust_verification/kani'
 
   # Verus ships as a release archive, not something cargo installs, and it
   # refuses to start unless the exact rustc named in its version.json is
@@ -127,7 +127,7 @@ jobs:
 
       - uses: leanprover/lean-action@v1
         with:
-          lake-package-directory: scenarios/estimate_size
+          lake-package-directory: scenarios/primitives/boundary/estimate_size
 
       # Builds again (cached, seconds) and then reports the axioms behind every
       # theorem. Fails on sorryAx, on native_decide, or on anything unrecognised.
@@ -153,7 +153,7 @@ jobs:
       # prebuilt oleans for it and nothing is compiled from source.
       - uses: leanprover/lean-action@v1
         with:
-          lake-package-directory: scenarios/estimate_size/verification/rust_verification/aeneas
+          lake-package-directory: scenarios/primitives/boundary/estimate_size/verification/rust_verification/aeneas
           use-mathlib-cache: true
           use-github-cache: false
 
