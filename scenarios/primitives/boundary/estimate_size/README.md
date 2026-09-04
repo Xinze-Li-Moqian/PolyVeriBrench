@@ -111,6 +111,7 @@ proof.
 | `verification/rust_verification/aeneas/`      | Aeneas + Lean 4       | Lean mechanically translated from the Rust          |
 | `verification/python_verification/z3/`        | Z3                    | a hand-written SMT re-encoding                      |
 | `verification/python_verification/crosshair/` | CrossHair             | the real`src/estimate_size.py`                    |
+| `verification/python_verification/nagini/` | Nagini (Viper) | annotated Python carrying its own contracts |
 | `verification/dafny_verification/` | Dafny | a program that exists only in Dafny |
 
 Python and Rust each have one backend that reads the real source and one that

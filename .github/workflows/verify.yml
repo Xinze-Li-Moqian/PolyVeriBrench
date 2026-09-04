@@ -50,6 +50,34 @@ jobs:
       - name: Verify
         run: ./scripts/check_python.sh ${{ matrix.backend }}
 
+  # Its own job rather than a third entry in the python matrix: Nagini's
+  # backends are Viper's, which are Scala, so this one needs a JVM the other two
+  # do not.
+  nagini:
+    name: Python, Nagini
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-python@v5
+        with:
+          # Nagini supports 3.12 through 3.14.
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scenarios/primitives/boundary/estimate_size/verification/python_verification/nagini/requirements.txt
+
+      - name: Install Nagini
+        run: pip install -r scenarios/primitives/boundary/estimate_size/verification/python_verification/nagini/requirements.txt
+
+      - name: Verify
+        run: ./scripts/check_python.sh nagini
+
   # Program, specification, and proofs are one Dafny file, so there is nothing
   # to install but Dafny itself.
   dafny:

@@ -1,0 +1,4 @@
+# Nagini is kept apart from the z3/crosshair pins on purpose: it drags in a JVM
+# stack (Viper's backends are Scala) and needs Python 3.12-3.14, so its CI job
+# has a different shape from theirs.
+nagini==1.3.1

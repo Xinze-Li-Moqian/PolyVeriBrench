@@ -10,7 +10,7 @@ to a complete one.
 
 | Scenario | Program | Backends |
 |---|---|---|
-| [`primitives/boundary/estimate_size`](scenarios/primitives/boundary/estimate_size/) | a size lookup that panics on exactly one input out of 2^32 | Lean, Aeneas, Kani, Verus, Z3, CrossHair, Dafny |
+| [`primitives/boundary/estimate_size`](scenarios/primitives/boundary/estimate_size/) | a size lookup that panics on exactly one input out of 2^32 | Lean, Aeneas, Kani, Verus, Z3, CrossHair, Nagini, Dafny |
 | [`primitives/loops/binary_search`](scenarios/primitives/loops/binary_search/) | binary search: the midpoint overflow that shipped in the JDK for nine years | Dafny |
 | [`primitives/loops/fibonacci`](scenarios/primitives/loops/fibonacci/) | an iterative loop proved equal to a recursive specification | Dafny, Lean |
 
@@ -59,6 +59,15 @@ VERUS=path/to/verus-dist/verus ./scripts/check_rust.sh verus
 ```
 
 [verus-releases]: https://github.com/verus-lang/verus/releases
+
+### Nagini
+
+Needs Java 11+ (Viper's backends are Scala) and Python 3.12-3.14:
+
+```sh
+pip install -r scenarios/primitives/boundary/estimate_size/verification/python_verification/nagini/requirements.txt
+./scripts/check_python.sh nagini
+```
 
 ### Dafny
 

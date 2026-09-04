@@ -5,6 +5,7 @@
 #   ./scripts/check_python.sh              # both
 #   ./scripts/check_python.sh z3           # just one
 #   ./scripts/check_python.sh crosshair
+#   ./scripts/check_python.sh nagini
 #
 # Needs the pinned tools:
 #   pip install -r scenarios/primitives/boundary/estimate_size/verification/python_verification/requirements.txt
@@ -21,6 +22,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYVER_DIR="$REPO_ROOT/scenarios/primitives/boundary/estimate_size/verification/python_verification"
 PYTHON="${PYTHON:-python3}"
 CROSSHAIR="${CROSSHAIR:-crosshair}"
+NAGINI="${NAGINI:-nagini}"
 
 # CrossHair's search is bounded by wall clock, so a slow machine could report a
 # clean run for the wrong reason. 30s per claim is ~150x what it needs locally.
@@ -40,8 +42,8 @@ wanted () {
 if [[ ${#selected[@]} -gt 0 ]]; then
   for want in "${selected[@]}"; do
     case "$want" in
-      z3|crosshair) ;;
-      *) echo "unknown backend: $want (known: z3 crosshair)" >&2; exit 2 ;;
+      z3|crosshair|nagini) ;;
+      *) echo "unknown backend: $want (known: z3 crosshair nagini)" >&2; exit 2 ;;
     esac
   done
 fi
@@ -68,6 +70,23 @@ if wanted crosshair; then
       --per_condition_timeout="$PER_CONDITION_TIMEOUT" \
       "$PYVER_DIR/crosshair/estimate_size.py"; then
     echo "  no counterexample found for any claim"
+    echo "  PASS"
+  else
+    echo "  FAIL"
+    failures=$((failures + 1))
+  fi
+fi
+
+if wanted nagini; then
+  ran=$((ran + 1))
+  echo "=============================================================="
+  echo "[nagini] verification/python_verification/nagini"
+  echo "  target: annotated Python; Viper discharges the contracts for every input"
+
+  if ! command -v "$NAGINI" >/dev/null 2>&1; then
+    echo "  FAIL: nagini not found at '$NAGINI' (needs Java 11+ and Python 3.12-3.14)"
+    failures=$((failures + 1))
+  elif "$NAGINI" "$PYVER_DIR/nagini/estimate_size.py"; then
     echo "  PASS"
   else
     echo "  FAIL"
