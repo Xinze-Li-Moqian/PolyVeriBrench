@@ -15,16 +15,12 @@ method FibIter(n: nat) returns (r: nat)
 
   var a: nat := 0;
   var b: nat := 1;
-  var i: nat := 1;
 
-  while i < n
-    invariant 1 <= i <= n
+  for i := 1 to n
     invariant a == FibSpec(i - 1)
     invariant b == FibSpec(i)
-    decreases n - i
   {
     a, b := b, a + b;
-    i := i + 1;
   }
 
   return b;
