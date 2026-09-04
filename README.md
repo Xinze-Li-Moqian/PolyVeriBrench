@@ -11,7 +11,7 @@ to a complete one.
 | Scenario | Program | Backends |
 |---|---|---|
 | [`primitives/boundary/estimate_size`](scenarios/primitives/boundary/estimate_size/) | a size lookup that panics on exactly one input out of 2^32 | Lean, Aeneas, Kani, Verus, Z3, CrossHair, Nagini, Dafny |
-| [`primitives/loops/binary_search`](scenarios/primitives/loops/binary_search/) | binary search: the midpoint overflow that shipped in the JDK for nine years | Dafny |
+| [`primitives/loops/binary_search`](scenarios/primitives/loops/binary_search/) | binary search: the midpoint overflow that shipped in the JDK for nine years | Dafny, Verus |
 | [`primitives/loops/fibonacci`](scenarios/primitives/loops/fibonacci/) | an iterative loop proved equal to a recursive specification | Dafny, Lean |
 | [`primitives/recursion/bst_delete`](scenarios/primitives/recursion/bst_delete/) | BST delete: the two-children case, where the value goes but the invariant breaks | Dafny |
 

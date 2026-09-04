@@ -6,6 +6,10 @@
 #   ./scripts/check_rust.sh kani         # just one
 #   ./scripts/check_rust.sh verus
 #
+# Targets are discovered rather than listed: a Cargo package under any
+# rust_verification/kani, and any *.rs under any rust_verification/verus. A new
+# scenario needs no edit here.
+#
 # Kani needs `cargo install --locked kani-verifier && cargo kani setup`.
 #
 # Verus ships as a release archive rather than something cargo installs, and it
@@ -30,7 +34,6 @@
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RUST_DIR="$REPO_ROOT/scenarios/primitives/boundary/estimate_size/verification/rust_verification"
 VERUS="${VERUS:-verus}"
 
 selected=("$@")
@@ -57,35 +60,38 @@ failures=0
 ran=0
 
 if wanted kani; then
-  ran=$((ran + 1))
-  echo "=============================================================="
-  echo "[kani] verification/rust_verification/kani"
-  echo "  target: the real src/estimate_size.rs, reached via include!"
-  if ! command -v cargo-kani >/dev/null 2>&1; then
-    echo "  FAIL: cargo-kani not found (cargo install --locked kani-verifier)"
-    failures=$((failures + 1))
-  elif (cd "$RUST_DIR/kani" && cargo kani); then
-    echo "  PASS"
-  else
-    echo "  FAIL"
-    failures=$((failures + 1))
-  fi
+  while IFS= read -r manifest; do
+    dir="$(dirname "$manifest")"
+    ran=$((ran + 1))
+    echo "=============================================================="
+    echo "[kani] ${dir#"$REPO_ROOT/"}"
+    if ! command -v cargo-kani >/dev/null 2>&1; then
+      echo "  FAIL: cargo-kani not found (cargo install --locked kani-verifier)"
+      failures=$((failures + 1))
+    elif (cd "$dir" && cargo kani); then
+      echo "  PASS"
+    else
+      echo "  FAIL"
+      failures=$((failures + 1))
+    fi
+  done < <(find "$REPO_ROOT/scenarios" -type f -name Cargo.toml -path '*/rust_verification/kani/*' | sort)
 fi
 
 if wanted verus; then
-  ran=$((ran + 1))
-  echo "=============================================================="
-  echo "[verus] verification/rust_verification/verus"
-  echo "  target: annotated Rust; specs are erased from the compiled binary"
-  if ! command -v "$VERUS" >/dev/null 2>&1; then
-    echo "  FAIL: verus not found at '$VERUS' (set VERUS=/path/to/verus)"
-    failures=$((failures + 1))
-  elif "$VERUS" "$RUST_DIR/verus/estimate_size.rs"; then
-    echo "  PASS"
-  else
-    echo "  FAIL"
-    failures=$((failures + 1))
-  fi
+  while IFS= read -r target; do
+    ran=$((ran + 1))
+    echo "=============================================================="
+    echo "[verus] ${target#"$REPO_ROOT/"}"
+    if ! command -v "$VERUS" >/dev/null 2>&1; then
+      echo "  FAIL: verus not found at '$VERUS' (set VERUS=/path/to/verus)"
+      failures=$((failures + 1))
+    elif "$VERUS" "$target"; then
+      echo "  PASS"
+    else
+      echo "  FAIL"
+      failures=$((failures + 1))
+    fi
+  done < <(find "$REPO_ROOT/scenarios" -type f -name '*.rs' -path '*/rust_verification/verus/*' | sort)
 fi
 
 echo "=============================================================="
@@ -94,8 +100,8 @@ if [[ "$ran" -eq 0 ]]; then
   exit 2
 fi
 if [[ "$failures" -eq 0 ]]; then
-  echo "rust verification: $ran backend(s) pass"
+  echo "rust verification: $ran target(s) pass"
   exit 0
 fi
-echo "rust verification: $failures of $ran backend(s) failed"
+echo "rust verification: $failures of $ran target(s) failed"
 exit 1

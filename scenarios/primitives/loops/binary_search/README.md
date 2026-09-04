@@ -106,6 +106,7 @@ verifier for Python has nothing to find here.
 | Path | Tool | Status |
 |---|---|---|
 | `verification/dafny_verification/` | Dafny | 7 verified, 0 errors |
+| `verification/rust_verification/verus/` | Verus | 3 verified, 0 errors |
 
 Only Dafny so far, on purpose. The comparison across seven tools is worth
 building once the invariant is understood, and it is a different comparison than
@@ -114,4 +115,36 @@ becomes bounded, and where CrossHair stops being able to exhaust the path tree.
 
 ```sh
 DAFNY=path/to/dafny/dafny ./scripts/check_dafny.sh binary_search
+VERUS=path/to/verus-dist/verus ./scripts/check_rust.sh verus
 ```
+
+### Dafny and Verus fail the same way, in different words
+
+Both treat the naive midpoint as an arithmetic proof obligation rather than as a
+wrong answer found downstream, and both point at the expression:
+
+```
+Dafny:  Error: result of operation might violate newtype constraint for 'uint32'
+Verus:  error: possible arithmetic underflow/overflow
+```
+
+Verus adds something Dafny's version did not state. Specification arithmetic is
+unbounded, so `safe_mid` can say what the safe form is *for*:
+
+```rust
+ensures r == (lo + hi) / 2
+```
+
+That `(lo + hi)` is the mathematical sum. The spec can name the value the
+executable code is forbidden from computing directly.
+
+The second failure mode also differs in where it lands. `sorted(a@)` is a
+precondition of the function, but a loop sees only what its invariant carries
+in, so omitting it from the invariant gives:
+
+```
+error: invariant not satisfied at end of loop body
+```
+
+on the two clauses that were kept -- the same shape as the fibonacci case, where
+deleting one invariant breaks the other.
