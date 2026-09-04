@@ -12,7 +12,7 @@ to a complete one.
 |---|---|---|
 | [`primitives/boundary/estimate_size`](scenarios/primitives/boundary/estimate_size/) | a size lookup that panics on exactly one input out of 2^32 | Lean, Aeneas, Kani, Verus, Z3, CrossHair, Dafny |
 | [`primitives/loops/binary_search`](scenarios/primitives/loops/binary_search/) | binary search: the midpoint overflow that shipped in the JDK for nine years | Dafny |
-| [`primitives/loops/fibonacci`](scenarios/primitives/loops/fibonacci/) | an iterative loop proved equal to a recursive specification | Dafny |
+| [`primitives/loops/fibonacci`](scenarios/primitives/loops/fibonacci/) | an iterative loop proved equal to a recursive specification | Dafny, Lean |
 
 Scenarios are grouped by what makes verification hard, not by what the program
 does: `boundary/` is about the input space, `loops/` about unbounded control

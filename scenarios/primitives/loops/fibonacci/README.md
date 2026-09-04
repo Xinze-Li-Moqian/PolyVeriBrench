@@ -63,8 +63,50 @@ invariant does not get you half a proof.
 
 | Path | Tool | Status |
 |---|---|---|
-| `verification/dafny_verification/` | Dafny | 2 verified, 0 errors |
+| `verification/dafny_verification/` | Dafny | 3 verified, 0 errors |
+| `verification/lean_verification/` | Lean 4 + `mvcgen` | 10 theorems, standard axioms only |
 
 ```sh
 DAFNY=path/to/dafny/dafny ./scripts/check_dafny.sh fibonacci
+cd scenarios/primitives/loops/fibonacci && lake build
+./scripts/check_axioms.sh fibonacci
 ```
+
+### What Lean needed that Dafny did not
+
+`estimate_size` was proved in Lean by throwing `bv_decide` at it -- 2^32 cases,
+bit-blasted to SAT, no thought required. That does not work here: the input is
+unbounded and the program is a loop, so there is nothing to enumerate.
+
+The tool for this is `mvcgen`, the verification-condition generator in
+`Std.Do`. It works the way Dafny does -- state the goal, supply the loop
+invariant, discharge what comes back -- with two steps of setup Dafny does not
+need, to turn `Id.run do ...` into a Hoare triple:
+
+```lean
+generalize h : fib_iter_correction_for n = res
+apply Id.of_wp_run_eq h
+mvcgen invariants
+  | inv1 => ⇓⟨xs, ab⟩ => ⌜ab.1 = fib_spec xs.prefix.length ∧
+                           ab.2 = fib_spec (xs.prefix.length + 1)⌝
+```
+
+The `for`/`while` difference shows up as what `mvcgen` asks for. The `for`
+version leaves one hole, `inv1`. The `while` version leaves two:
+
+```
+case inv1 ⊢ WhileVariant (Nat × Nat × Nat) PostShape.pure
+case inv2 ⊢ WhileInvariant (Nat × Nat × Nat) (Nat × Nat × Nat) PostShape.pure
+```
+
+`WhileVariant` is the termination measure -- Dafny's `decreases`, under another
+name. And `mvcgen?`, which prints a suggested invariant skeleton for the `for`
+loop, says only "There were no suggestions for missing invariants" for the
+`while` one.
+
+Two smaller notes. `rfl` and `decide` cannot evaluate these functions at all,
+even on a literal like `fib_iter_correction_for 10`: the kernel gets stuck on
+`forIn`. `native_decide` would work and is the obvious escape hatch -- it also
+introduces `Lean.ofReduceBool`, which `scripts/check_axioms.sh` rejects. The
+proofs here depend on nothing beyond `propext`, `Classical.choice`, and
+`Quot.sound`.

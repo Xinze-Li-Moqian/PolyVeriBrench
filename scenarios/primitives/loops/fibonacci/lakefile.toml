@@ -1,0 +1,7 @@
+name = "fibonacci"
+version = "0.1.0"
+defaultTargets = ["Fibonacci"]
+
+[[lean_lib]]
+name = "Fibonacci"
+roots = ["src.fibonacci", "verification.lean_verification.fibonacci"]

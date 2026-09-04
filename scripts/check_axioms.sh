@@ -27,6 +27,7 @@ TMPL="$REPO_ROOT/scripts/AxiomCheck.lean.tmpl"
 PROJECTS=(
   "native|scenarios/primitives/boundary/estimate_size|verification.lean_verification.estimate_size"
   "aeneas|scenarios/primitives/boundary/estimate_size/verification/rust_verification/aeneas|EstimateSizeAeneas.Proofs"
+  "fibonacci|scenarios/primitives/loops/fibonacci|verification.lean_verification.fibonacci"
 )
 
 if [[ ! -f "$TMPL" ]]; then

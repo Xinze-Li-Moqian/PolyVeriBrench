@@ -117,22 +117,32 @@ jobs:
       - name: Verify
         run: ./scripts/check_rust.sh verus
 
-  # Zero dependencies, toolchain only -- this one is fast and should stay fast.
+  # Zero dependencies, toolchain only -- these are fast and should stay fast.
   native:
-    name: Lean, hand-written (v4.33.1)
+    name: Lean, ${{ matrix.label }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dir: scenarios/primitives/boundary/estimate_size
+            audit: native
+            label: estimate_size
+          - dir: scenarios/primitives/loops/fibonacci
+            audit: fibonacci
+            label: fibonacci
     steps:
       - uses: actions/checkout@v5
 
       - uses: leanprover/lean-action@v1
         with:
-          lake-package-directory: scenarios/primitives/boundary/estimate_size
+          lake-package-directory: ${{ matrix.dir }}
 
       # Builds again (cached, seconds) and then reports the axioms behind every
       # theorem. Fails on sorryAx, on native_decide, or on anything unrecognised.
       - name: Axiom audit
-        run: ./scripts/check_axioms.sh native
+        run: ./scripts/check_axioms.sh ${{ matrix.audit }}
 
   # Separate job because this one drags in Mathlib. Kept off the critical path
   # so a broken hand-written proof reports in ~2 minutes rather than ~20.
